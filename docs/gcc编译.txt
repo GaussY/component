@@ -1,0 +1,70 @@
+一、下载「自带依赖」的 GCC 12.3.0 源码包
+1. 操作目的
+获取 GCC 12.3.0 官方源码包，并通过官方脚本自动下载适配的 gmp/mpfr/mpc/isl 依赖库（版本 100% 兼容，无需手动处理依赖版本 / 路径问题）。
+2. 操作步骤
+bash
+运行
+# 1. 进入第三方库存放目录（根据实际路径调整）
+cd /home/yyy/third_party
+
+# 2. 下载 GCC 12.3.0 官方源码主包
+wget https://ftp.gnu.org/gnu/gcc/gcc-12.3.0/gcc-12.3.0.tar.xz
+
+# 3. 解压源码包
+tar -xf gcc-12.3.0.tar.xz
+cd gcc-12.3.0
+
+# 4. 执行官方依赖下载脚本（自动下载适配版本的 gmp/mpfr/mpc/isl）
+# 脚本会将依赖库解压到 GCC 源码目录，编译时自动集成
+./contrib/download_prerequisites
+3. 验证依赖下载成功
+执行脚本后终端输出如下内容，说明依赖下载完成：
+Downloading gmp-6.2.1.tar.bz2
+Downloading mpfr-4.1.0.tar.bz2
+Downloading mpc-1.2.1.tar.gz
+Downloading isl-0.24.tar.bz2
+All prerequisites downloaded successfully.
+
+二、一键编译「自带依赖」的 GCC 12.3.0
+1. 操作目的
+编译并安装 GCC 12.3.0 到 /home/yyy/third_party/gcc-12.3.0 目录，编译过程自动使用内置依赖库，无需手动指定依赖路径。
+2. 操作步骤
+bash
+运行
+# 1. 创建编译目录（规范做法，避免污染源码）
+mkdir -p build && cd build
+
+# 2. 配置编译参数（安装路径指定为 gcc-12.3.0，仅编译 C/C++）
+../configure \
+    --prefix=/home/yyy/third_party/gcc-12.3.0 \  # 核心：安装目录改为 gcc-12.3.0
+    --enable-languages=c,c++ \                   # 仅编译 C/C++ 语言（减少编译耗时）
+    --disable-multilib \                         # 关闭多架构支持（适配 x86_64 主流架构）
+    --disable-bootstrap                          # 关闭自举编译（加速编译，避免资源耗尽）
+
+# 3. 编译（多核加速，低配机器建议用 -j2/-j1，避免中断）
+make -j$(nproc)
+
+# 4. 安装编译产物到指定目录
+make install
+
+三、验证编译安装成功
+bash
+运行
+# 配置环境变量（临时生效，如需永久生效可写入 ~/.bashrc）
+export PATH=/home/yyy/third_party/gcc-12.3.0/bin:$PATH
+
+# 验证 GCC 版本
+gcc --version
+输出如下内容，说明安装成功：
+gcc (GCC) 12.3.0
+Copyright © 2022 Free Software Foundation, Inc.
+本程序是自由软件；请参看源代码的版权声明。本软件没有任何担保；
+包括没有适销性和某一专用目的下的适用性担保。
+
+关键说明（文档补充）
+依赖库存放路径：下载的 gmp/mpfr/mpc/isl 依赖库解压到 gcc-12.3.0/ 根目录（如 gmp-6.2.1、mpfr-4.1.0），编译时自动集成，无需手动指定 --with-gmp/--with-mpfr 等参数；
+编译参数说明：
+--prefix：指定 GCC 安装根目录，修改为 gcc-12.3.0 后，所有编译产物（二进制、库、头文件）均存放在该目录；
+--disable-multilib：仅编译 x86_64 架构的库，避免生成多余架构文件；
+--disable-bootstrap：跳过 GCC 自举编译（默认会编译 3 次），编译耗时减少 2/3；
+编译中断处理：若编译中断，执行 make distclean && rm -f config.cache 清理缓存后，重新执行 make -j2 断点续编（降低核心数提升稳定性）。
