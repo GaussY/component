@@ -1,0 +1,11 @@
+{
+  "global_level": "info",
+  "log_dir": "./logs/",
+  "log_prefix": "pcc",
+  "async_enable": true,
+  "async_queue_size": 8192,
+  "console_output": true,
+  "module_levels": {
+    "testModule": "debug"
+  }
+}

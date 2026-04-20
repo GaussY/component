@@ -1,0 +1,9 @@
+{
+    "current": "",
+    "default": "zh_CN",
+    "supported": [
+        "en_US",
+        "zh_CN",
+        "ru_RU"
+    ]
+}
